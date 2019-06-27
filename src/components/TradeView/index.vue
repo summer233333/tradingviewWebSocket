@@ -19,15 +19,16 @@ export default {
       lastTime: null,
       getBarTimer: null,
       isLoading: true,
-      page:1
+      page:1,
+      socketData:null
     }
   },
   created() {
-    this.socket.doOpen()
-    this.socket.on('open', () => {
-      this.socket.send({ cmd: 'req', args: [`candle.M5.btcusdt}`, 1440, parseInt(Date.now() / 1000)] })
-    })
-    this.socket.on('message', this.onMessage)
+    // this.socket.doOpen()
+    // this.socket.on('open', () => {
+    //   this.socket.send({ cmd: 'req', args: [`candle.M5.btcusdt}`, 1440, parseInt(Date.now() / 1000)] })
+    // })
+    // this.socket.on('message', this.onMessage)
   },
   methods: {
     init(symbol = 'BTCUSDT', interval = 5) {
@@ -251,6 +252,7 @@ export default {
         volume: Number(data.vol),
         time: Number(data.id*1000),
       }
+      this.socketData = barsData;
       // if (data.data && data.data.length) {
       //   const ticker = `${this.symbol}`
       //   this.subscribe()

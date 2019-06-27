@@ -3,6 +3,7 @@
  */
 import dataUpdater from './dataUpdater'
 import axios from 'axios'
+import websocket from 'websocket'
 class datafeeds {
 
   /**
@@ -54,7 +55,7 @@ class datafeeds {
    */
   getBars(symbolInfo, resolution, rangeStartDate, rangeEndDate, onDataCallback, onErrorCallback) {
 
-    axios.get('https://api.aofex.com/webApi/market/getKline?symbol=BTC-USDT&period=1min',{params:{size:200*this.self.page}}).then(res=>{
+    axios.get('https://api.aofex.com/webApi/market/getKline?symbol=BTC-AQ&period=1min',{params:{size:200*this.self.page}}).then(res=>{
       let data =[]
       res.data.result.data.splice(-200).forEach(function(value){
         data.push({
@@ -68,8 +69,6 @@ class datafeeds {
         })
 
       })
-      console.log(data);
-      console.log(symbolInfo);
       data.reverse()
       if(this.self.cacheData[symbolInfo.ticker]){
         this.self.cacheData[symbolInfo.ticker] = [...data,...this.self.cacheData[symbolInfo.ticker]]
@@ -77,7 +76,7 @@ class datafeeds {
         this.self.cacheData[symbolInfo.ticker] = data
       }
 
-      console.log(this.self);
+      // console.log(this.self);
      // let data = [{time:1557974160000,open:8263.9,close:8263.92,low:8263.9,high:8263.92,vol:491.43821757},
      //    {time:1557973980000,open:8263.7,close:8263.7,low:8263.7,high:8263.7,vol:7.4621211}].reverse();
       data && data.length ? onDataCallback(data, { noData: true }) : onDataCallback([], { noData: true })
@@ -98,7 +97,26 @@ class datafeeds {
    * @param {*Function} onResetCacheNeededCallback (从1.7开始): 将在bars数据发生变化时执行
    */
   subscribeBars(symbolInfo, resolution, onRealtimeCallback, subscriberUID, onResetCacheNeededCallback) {
-    this.barsUpdater.subscribeBars(symbolInfo, resolution, onRealtimeCallback, subscriberUID, onResetCacheNeededCallback)
+
+    // this.barsUpdater.subscribeBars(symbolInfo, resolution, onRealtimeCallback, subscriberUID, onResetCacheNeededCallback)
+    var that = this
+    // if(this.self.socketData)onRealtimeCallback();
+    let socket = new websocket.w3cwebsocket('wss://api.aofex.com/websocket/kline/BTC-AQ/1min');
+    socket.onopen=function () {
+    };
+    socket.onmessage=function (message) {
+      let data = JSON.parse(message.data).data;
+      const barsData = {
+        close: Number(data.close),
+        open: Number(data.open),
+        high: Number(data.high),
+        low: Number(data.low),
+        volume: Number(data.vol),
+        time: Number(data.id*1000),
+      };
+      onRealtimeCallback(barsData)
+      that.barsUpdater.subscribeBars(symbolInfo, resolution, barsData, subscriberUID, onResetCacheNeededCallback)
+    }
   }
 
   /**

@@ -9,6 +9,7 @@ class dataUpdater {
     this.historyProvider = datafeeds
   }
   subscribeBars(symbolInfo, resolution, newDataCallback, listenerGuid) {
+    // alert(11111)
     this.subscribers[listenerGuid] = {
       lastBarTime: null,
       listener: newDataCallback,
